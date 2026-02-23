@@ -206,12 +206,17 @@ fn spawn_reset_overlay(commands: &mut Commands, selected_confirm: &mut ResMut<Se
         ))
         .with_children(|overlay| {
             overlay
-                .spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                })
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        padding: UiRect::all(Val::Px(40.0)),
+                        border_radius: BorderRadius::all(Val::Px(12.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
+                ))
                 .with_children(|panel| {
                     panel.spawn((
                         Text::new("Reset Progress?"),
