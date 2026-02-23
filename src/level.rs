@@ -89,6 +89,7 @@ fn load_level(mut commands: Commands, current_level: Res<CurrentLevel>, mut spaw
                     Transform::from_translation(pos),
                     RigidBody::Static,
                     Collider::rectangle(TILE_SIZE, TILE_SIZE),
+                    Friction::ZERO,
                     DespawnOnExit::<GameState>(GameState::Playing),
                 ));
             }
