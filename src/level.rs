@@ -42,7 +42,13 @@ pub struct CurrentLevel(pub usize);
 
 const TILE_SIZE: f32 = 32.0;
 
-pub const LEVELS: &[&str] = &["assets/levels/level_01.ron", "assets/levels/level_02.ron"];
+pub const LEVELS: &[&str] = &[
+    "assets/levels/level_01.ron",
+    "assets/levels/level_02.ron",
+    "assets/levels/level_03.ron",
+    "assets/levels/level_04.ron",
+    "assets/levels/level_05.ron",
+];
 
 pub struct LevelPlugin;
 

@@ -1,0 +1,33 @@
+LevelData(
+    name: "Gaps and Spikes",
+    spawn: (1.0, 2.0),
+    exit: (32.0, 6.0),
+    tiles: [
+        // Starting ground
+        TileEntry(x: 0, y: 0, kind: Platform),
+        TileEntry(x: 1, y: 0, kind: Platform),
+        TileEntry(x: 2, y: 0, kind: Platform),
+        // Jump over gap to spike+platform combo
+        TileEntry(x: 5, y: 0, kind: Spikes),
+        TileEntry(x: 6, y: 0, kind: Platform),
+        TileEntry(x: 7, y: 0, kind: Platform),
+        // Rising with spikes
+        TileEntry(x: 10, y: 2, kind: Platform),
+        TileEntry(x: 11, y: 2, kind: Spikes),
+        TileEntry(x: 12, y: 2, kind: Platform),
+        // Big gap
+        TileEntry(x: 16, y: 3, kind: Platform),
+        TileEntry(x: 17, y: 3, kind: Platform),
+        // Descend with traps
+        TileEntry(x: 20, y: 1, kind: Platform),
+        TileEntry(x: 21, y: 1, kind: Spikes),
+        TileEntry(x: 22, y: 1, kind: Platform),
+        // Final climb
+        TileEntry(x: 25, y: 3, kind: Platform),
+        TileEntry(x: 26, y: 3, kind: Platform),
+        TileEntry(x: 29, y: 5, kind: Platform),
+        TileEntry(x: 30, y: 5, kind: Platform),
+        TileEntry(x: 31, y: 5, kind: Platform),
+        TileEntry(x: 32, y: 5, kind: Platform),
+    ],
+)

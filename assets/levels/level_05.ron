@@ -1,0 +1,51 @@
+LevelData(
+    name: "The Finale",
+    spawn: (1.0, 2.0),
+    exit: (45.0, 10.0),
+    tiles: [
+        // Start
+        TileEntry(x: 0, y: 0, kind: Platform),
+        TileEntry(x: 1, y: 0, kind: Platform),
+        TileEntry(x: 2, y: 0, kind: Platform),
+        TileEntry(x: 3, y: 0, kind: Platform),
+        // Spike run
+        TileEntry(x: 4, y: 0, kind: Spikes),
+        TileEntry(x: 5, y: 0, kind: Spikes),
+        TileEntry(x: 6, y: 0, kind: Platform),
+        TileEntry(x: 7, y: 0, kind: Platform),
+        // Gap + climb
+        TileEntry(x: 10, y: 2, kind: Platform),
+        TileEntry(x: 11, y: 2, kind: Platform),
+        TileEntry(x: 13, y: 4, kind: Platform),
+        TileEntry(x: 14, y: 4, kind: Platform),
+        TileEntry(x: 16, y: 6, kind: Platform),
+        TileEntry(x: 17, y: 6, kind: Platform),
+        // Descent with spikes
+        TileEntry(x: 19, y: 4, kind: Spikes),
+        TileEntry(x: 20, y: 4, kind: Platform),
+        TileEntry(x: 21, y: 4, kind: Platform),
+        TileEntry(x: 22, y: 2, kind: Platform),
+        TileEntry(x: 23, y: 2, kind: Platform),
+        // Flat spike field
+        TileEntry(x: 25, y: 2, kind: Spikes),
+        TileEntry(x: 26, y: 2, kind: Platform),
+        TileEntry(x: 27, y: 2, kind: Spikes),
+        TileEntry(x: 28, y: 2, kind: Platform),
+        // Second climb
+        TileEntry(x: 30, y: 4, kind: Platform),
+        TileEntry(x: 31, y: 4, kind: Platform),
+        TileEntry(x: 33, y: 6, kind: Platform),
+        TileEntry(x: 34, y: 6, kind: Platform),
+        TileEntry(x: 36, y: 8, kind: Platform),
+        TileEntry(x: 37, y: 8, kind: Platform),
+        // Final gauntlet
+        TileEntry(x: 39, y: 8, kind: Spikes),
+        TileEntry(x: 40, y: 8, kind: Platform),
+        TileEntry(x: 41, y: 8, kind: Spikes),
+        TileEntry(x: 42, y: 8, kind: Platform),
+        // Exit platform
+        TileEntry(x: 43, y: 9, kind: Platform),
+        TileEntry(x: 44, y: 9, kind: Platform),
+        TileEntry(x: 45, y: 9, kind: Platform),
+    ],
+)

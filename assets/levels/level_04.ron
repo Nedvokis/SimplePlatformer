@@ -1,0 +1,34 @@
+LevelData(
+    name: "Vertical Climb",
+    spawn: (1.0, 2.0),
+    exit: (18.0, 16.0),
+    tiles: [
+        // Base
+        TileEntry(x: 0, y: 0, kind: Platform),
+        TileEntry(x: 1, y: 0, kind: Platform),
+        TileEntry(x: 2, y: 0, kind: Platform),
+        // Staircase up
+        TileEntry(x: 4, y: 2, kind: Platform),
+        TileEntry(x: 5, y: 2, kind: Platform),
+        TileEntry(x: 7, y: 4, kind: Platform),
+        TileEntry(x: 3, y: 6, kind: Platform),
+        TileEntry(x: 4, y: 6, kind: Platform),
+        // Spike gauntlet
+        TileEntry(x: 6, y: 8, kind: Spikes),
+        TileEntry(x: 7, y: 8, kind: Platform),
+        TileEntry(x: 8, y: 8, kind: Platform),
+        // More climbing
+        TileEntry(x: 10, y: 10, kind: Platform),
+        TileEntry(x: 11, y: 10, kind: Platform),
+        TileEntry(x: 13, y: 12, kind: Platform),
+        TileEntry(x: 14, y: 12, kind: Platform),
+        // Summit with spikes
+        TileEntry(x: 15, y: 14, kind: Spikes),
+        TileEntry(x: 16, y: 14, kind: Platform),
+        TileEntry(x: 17, y: 14, kind: Platform),
+        TileEntry(x: 18, y: 14, kind: Platform),
+        // Exit platform
+        TileEntry(x: 17, y: 15, kind: Platform),
+        TileEntry(x: 18, y: 15, kind: Platform),
+    ],
+)

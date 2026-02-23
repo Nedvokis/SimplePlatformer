@@ -1,5 +1,5 @@
 LevelData(
-    name: "Продвинутый",
+    name: "Advanced",
     spawn: (1.0, 2.0),
     exit: (30.0, 8.0),
     tiles: [
