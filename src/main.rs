@@ -1,11 +1,13 @@
 mod menu;
 mod physics;
+mod player;
 mod settings;
 mod states;
 
 use bevy::prelude::*;
 use menu::MenuPlugin;
 use physics::PhysicsPlugin;
+use player::PlayerPlugin;
 use settings::SettingsPlugin;
 use states::StatesPlugin;
 
@@ -21,6 +23,7 @@ fn main() {
         }))
         .add_plugins(StatesPlugin)
         .add_plugins(PhysicsPlugin)
+        .add_plugins(PlayerPlugin)
         .add_plugins(MenuPlugin)
         .add_plugins(SettingsPlugin)
         .run();
