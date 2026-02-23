@@ -23,7 +23,7 @@ impl Plugin for LevelSelectPlugin {
             .add_systems(OnEnter(GameState::LevelSelect), setup_level_select)
             .add_systems(
                 Update,
-                (level_select_navigation, level_select_highlight, level_select_action)
+                (level_select_navigation, level_select_mouse, level_select_highlight, level_select_action)
                     .chain()
                     .run_if(in_state(GameState::LevelSelect)),
             );
@@ -146,6 +146,17 @@ fn level_select_navigation(
     }
 }
 
+fn level_select_mouse(
+    mut selected: ResMut<SelectedLevelItem>,
+    buttons: Query<(&LevelSelectRow, &Interaction), Changed<Interaction>>,
+) {
+    for (row, interaction) in &buttons {
+        if *interaction == Interaction::Hovered || *interaction == Interaction::Pressed {
+            selected.0 = row.0;
+        }
+    }
+}
+
 fn level_select_highlight(
     selected: Res<SelectedLevelItem>,
     progress: Res<PlayerProgress>,
@@ -180,13 +191,17 @@ fn level_select_action(
     progress: Res<PlayerProgress>,
     mut current_level: ResMut<CurrentLevel>,
     mut next_state: ResMut<NextState<GameState>>,
+    buttons: Query<(&LevelSelectRow, &Interaction)>,
 ) {
     if keyboard.just_pressed(KeyCode::Escape) {
         next_state.set(GameState::Menu);
         return;
     }
 
-    if !keyboard.just_pressed(KeyCode::Enter) {
+    let enter = keyboard.just_pressed(KeyCode::Enter);
+    let clicked = buttons.iter().any(|(_, i)| *i == Interaction::Pressed);
+
+    if !enter && !clicked {
         return;
     }
 

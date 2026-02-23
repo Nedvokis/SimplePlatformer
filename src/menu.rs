@@ -27,7 +27,7 @@ impl Plugin for MenuPlugin {
             .add_systems(OnEnter(GameState::Menu), setup_menu)
             .add_systems(
                 Update,
-                (menu_navigation, menu_highlight, menu_action)
+                (menu_navigation, menu_mouse, menu_highlight, menu_action)
                     .chain()
                     .run_if(in_state(GameState::Menu)),
             );
@@ -116,6 +116,20 @@ fn menu_navigation(
     }
 }
 
+fn menu_mouse(
+    mut selected: ResMut<SelectedMenuItem>,
+    buttons: Query<(&MenuAction, &Interaction), Changed<Interaction>>,
+) {
+    let actions_order = [MenuAction::StartGame, MenuAction::Settings, MenuAction::Exit];
+
+    for (action, interaction) in &buttons {
+        if *interaction == Interaction::Hovered || *interaction == Interaction::Pressed {
+            let index = actions_order.iter().position(|a| a == action).unwrap_or(0);
+            selected.0 = index;
+        }
+    }
+}
+
 fn menu_highlight(
     selected: Res<SelectedMenuItem>,
     mut buttons: Query<(&MenuAction, &mut BackgroundColor)>,
@@ -138,8 +152,12 @@ fn menu_action(
     mut next_state: ResMut<NextState<GameState>>,
     mut settings_origin: ResMut<SettingsOrigin>,
     mut exit_events: MessageWriter<AppExit>,
+    buttons: Query<(&MenuAction, &Interaction)>,
 ) {
-    if !keyboard.just_pressed(KeyCode::Enter) {
+    let enter = keyboard.just_pressed(KeyCode::Enter);
+    let clicked = buttons.iter().any(|(_, i)| *i == Interaction::Pressed);
+
+    if !enter && !clicked {
         return;
     }
 

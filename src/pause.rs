@@ -27,7 +27,7 @@ impl Plugin for PausePlugin {
             .add_systems(OnEnter(GameState::Paused), spawn_pause_overlay)
             .add_systems(
                 Update,
-                (pause_navigation, pause_highlight, pause_action)
+                (pause_navigation, pause_mouse, pause_highlight, pause_action)
                     .chain()
                     .run_if(in_state(GameState::Paused)),
             );
@@ -146,6 +146,20 @@ fn pause_navigation(
     }
 }
 
+fn pause_mouse(
+    mut selected: ResMut<SelectedPauseItem>,
+    buttons: Query<(&PauseAction, &Interaction), Changed<Interaction>>,
+) {
+    let actions_order = [PauseAction::Resume, PauseAction::Settings, PauseAction::ToMenu];
+
+    for (action, interaction) in &buttons {
+        if *interaction == Interaction::Hovered || *interaction == Interaction::Pressed {
+            let index = actions_order.iter().position(|a| a == action).unwrap_or(0);
+            selected.0 = index;
+        }
+    }
+}
+
 fn pause_highlight(
     selected: Res<SelectedPauseItem>,
     mut buttons: Query<(&PauseAction, &mut BackgroundColor)>,
@@ -167,8 +181,12 @@ fn pause_action(
     selected: Res<SelectedPauseItem>,
     mut next_state: ResMut<NextState<GameState>>,
     mut settings_origin: ResMut<SettingsOrigin>,
+    buttons: Query<(&PauseAction, &Interaction)>,
 ) {
-    if !keyboard.just_pressed(KeyCode::Enter) {
+    let enter = keyboard.just_pressed(KeyCode::Enter);
+    let clicked = buttons.iter().any(|(_, i)| *i == Interaction::Pressed);
+
+    if !enter && !clicked {
         return;
     }
 

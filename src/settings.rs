@@ -62,6 +62,7 @@ impl Plugin for SettingsPlugin {
                 Update,
                 (
                     settings_navigation,
+                    settings_mouse,
                     settings_adjust,
                     settings_highlight,
                     settings_update_text,
@@ -187,6 +188,23 @@ fn settings_navigation(
     }
 }
 
+fn settings_mouse(
+    mut selected: ResMut<SelectedSettingsItem>,
+    confirming: Res<ConfirmingReset>,
+    mut selected_confirm: ResMut<SelectedConfirmItem>,
+    buttons: Query<(&SettingsRow, &Interaction), Changed<Interaction>>,
+) {
+    for (row, interaction) in &buttons {
+        if *interaction == Interaction::Hovered || *interaction == Interaction::Pressed {
+            if confirming.0 && row.0 >= 100 {
+                selected_confirm.0 = row.0 - 100;
+            } else if !confirming.0 && row.0 < 100 {
+                selected.0 = row.0;
+            }
+        }
+    }
+}
+
 fn spawn_reset_overlay(commands: &mut Commands, selected_confirm: &mut ResMut<SelectedConfirmItem>) {
     selected_confirm.0 = 1; // Default to "No" for safety
 
@@ -278,6 +296,7 @@ fn settings_adjust(
     mut progress: ResMut<PlayerProgress>,
     mut selected_confirm: ResMut<SelectedConfirmItem>,
     overlay_query: Query<Entity, With<ResetOverlay>>,
+    buttons_interaction: Query<(&SettingsRow, &Interaction)>,
 ) {
     if confirming.0 {
         if keyboard.just_pressed(KeyCode::Escape) {
@@ -293,7 +312,11 @@ fn settings_adjust(
         if keyboard.just_pressed(KeyCode::ArrowRight) {
             selected_confirm.0 = 1;
         }
-        if keyboard.just_pressed(KeyCode::Enter) {
+        let enter = keyboard.just_pressed(KeyCode::Enter);
+        let popup_clicked = buttons_interaction
+            .iter()
+            .any(|(row, i)| row.0 >= 100 && *i == Interaction::Pressed);
+        if enter || popup_clicked {
             if selected_confirm.0 == 0 {
                 progress.max_unlocked_level = 0;
                 save_progress(&progress);
@@ -311,8 +334,15 @@ fn settings_adjust(
         return;
     }
 
-    if keyboard.just_pressed(KeyCode::Enter) {
-        match selected.0 {
+    let enter = keyboard.just_pressed(KeyCode::Enter);
+    let row_clicked = buttons_interaction
+        .iter()
+        .find(|(row, i)| row.0 < 100 && **i == Interaction::Pressed)
+        .map(|(row, _)| row.0);
+
+    if enter || row_clicked.is_some() {
+        let action_row = row_clicked.unwrap_or(selected.0);
+        match action_row {
             4 => {
                 changed.0 = false;
                 return;
