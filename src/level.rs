@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use avian2d::prelude::*;
 use bevy::prelude::*;
 use serde::Deserialize;
@@ -64,6 +66,52 @@ impl Plugin for LevelPlugin {
     }
 }
 
+/// Groups platform tiles into horizontal runs for merged colliders.
+/// Returns a list of (start_x, y, count) tuples.
+fn merge_platform_runs(tiles: &[TileEntry]) -> Vec<(i32, i32, usize)> {
+    let platforms: HashSet<(i32, i32)> = tiles
+        .iter()
+        .filter(|t| matches!(t.kind, TileKind::Platform))
+        .map(|t| (t.x, t.y))
+        .collect();
+
+    let mut runs = Vec::new();
+    let mut visited: HashSet<(i32, i32)> = HashSet::new();
+
+    let mut ys: Vec<i32> = platforms.iter().map(|(_, y)| *y).collect();
+    ys.sort();
+    ys.dedup();
+
+    for y in ys {
+        let mut xs: Vec<i32> = platforms
+            .iter()
+            .filter(|(_, py)| *py == y)
+            .map(|(x, _)| *x)
+            .collect();
+        xs.sort();
+
+        let mut i = 0;
+        while i < xs.len() {
+            let start_x = xs[i];
+            if visited.contains(&(start_x, y)) {
+                i += 1;
+                continue;
+            }
+            let mut count = 1;
+            while i + count < xs.len() && xs[i + count] == start_x + count as i32 {
+                count += 1;
+            }
+            for j in 0..count {
+                visited.insert((start_x + j as i32, y));
+            }
+            runs.push((start_x, y, count));
+            i += count;
+        }
+    }
+
+    runs
+}
+
 fn load_level(mut commands: Commands, current_level: Res<CurrentLevel>, mut spawn_point: ResMut<SpawnPoint>) {
     let index = current_level.0;
     let contents = std::fs::read_to_string(LEVELS[index])
@@ -87,9 +135,6 @@ fn load_level(mut commands: Commands, current_level: Res<CurrentLevel>, mut spaw
                         ..default()
                     },
                     Transform::from_translation(pos),
-                    RigidBody::Static,
-                    Collider::rectangle(TILE_SIZE, TILE_SIZE),
-                    Friction::ZERO,
                     DespawnOnExit::<GameState>(GameState::Playing),
                 ));
             }
@@ -110,6 +155,21 @@ fn load_level(mut commands: Commands, current_level: Res<CurrentLevel>, mut spaw
                 ));
             }
         }
+    }
+
+    // Spawn merged platform colliders (physics only, no sprite)
+    for (start_x, y, count) in merge_platform_runs(&level.tiles) {
+        let width = count as f32 * TILE_SIZE;
+        let center_x = start_x as f32 * TILE_SIZE + (width - TILE_SIZE) / 2.0;
+        let center_y = y as f32 * TILE_SIZE;
+        commands.spawn((
+            Platform,
+            RigidBody::Static,
+            Collider::rectangle(width, TILE_SIZE),
+            Friction::ZERO,
+            Transform::from_xyz(center_x, center_y, 0.0),
+            DespawnOnExit::<GameState>(GameState::Playing),
+        ));
     }
 
     // Spawn exit
