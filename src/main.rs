@@ -1,8 +1,10 @@
 mod menu;
+mod settings;
 mod states;
 
 use bevy::prelude::*;
 use menu::MenuPlugin;
+use settings::SettingsPlugin;
 use states::StatesPlugin;
 
 fn main() {
@@ -17,5 +19,6 @@ fn main() {
         }))
         .add_plugins(StatesPlugin)
         .add_plugins(MenuPlugin)
+        .add_plugins(SettingsPlugin)
         .run();
 }
