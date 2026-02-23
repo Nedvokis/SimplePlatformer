@@ -47,6 +47,7 @@ fn spawn_player(mut commands: Commands, spawn_point: Res<SpawnPoint>) {
             RigidBody::Dynamic,
             Collider::rectangle(24.0, 32.0),
             LockedAxes::ROTATION_LOCKED,
+            Friction::ZERO,
             LinearVelocity::ZERO,
             Transform::from_translation(spawn_point.0.extend(0.0)),
             DespawnOnExit::<GameState>(GameState::Playing),
