@@ -7,6 +7,7 @@ use crate::states::GameState;
 
 #[derive(Deserialize)]
 pub struct LevelData {
+    #[allow(dead_code)]
     pub name: String,
     pub spawn: (f32, f32),
     pub exit: (f32, f32),

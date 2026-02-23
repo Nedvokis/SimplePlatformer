@@ -4,14 +4,8 @@ use bevy::prelude::*;
 use crate::states::{GameState, SettingsOrigin};
 
 /// Tracks which menu button is currently selected (0-indexed).
-#[derive(Resource, Debug, Clone)]
+#[derive(Resource, Debug, Clone, Default)]
 pub struct SelectedMenuItem(pub usize);
-
-impl Default for SelectedMenuItem {
-    fn default() -> Self {
-        Self(0)
-    }
-}
 
 /// Component attached to each menu button to identify its action.
 #[derive(Component, Debug, Clone, PartialEq, Eq)]

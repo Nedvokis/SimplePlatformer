@@ -26,14 +26,8 @@ impl Default for GameSettings {
     }
 }
 
-#[derive(Resource, Debug, Clone)]
+#[derive(Resource, Debug, Clone, Default)]
 pub struct SelectedSettingsItem(pub usize);
-
-impl Default for SelectedSettingsItem {
-    fn default() -> Self {
-        Self(0)
-    }
-}
 
 /// Marker for each settings row, indexed 0..4.
 #[derive(Component, Debug, Clone)]

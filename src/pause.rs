@@ -3,14 +3,8 @@ use bevy::prelude::*;
 use crate::states::{GameState, SettingsOrigin};
 
 /// Tracks which pause menu button is currently selected (0-indexed).
-#[derive(Resource, Debug, Clone)]
+#[derive(Resource, Debug, Clone, Default)]
 pub struct SelectedPauseItem(pub usize);
-
-impl Default for SelectedPauseItem {
-    fn default() -> Self {
-        Self(0)
-    }
-}
 
 /// Component attached to each pause button to identify its action.
 #[derive(Component, Debug, Clone, PartialEq, Eq)]
