@@ -1,6 +1,7 @@
 mod camera;
 mod level;
 mod menu;
+mod pause;
 mod physics;
 mod player;
 mod settings;
@@ -10,6 +11,7 @@ use bevy::prelude::*;
 use camera::CameraPlugin;
 use level::LevelPlugin;
 use menu::MenuPlugin;
+use pause::PausePlugin;
 use physics::PhysicsPlugin;
 use player::PlayerPlugin;
 use settings::SettingsPlugin;
@@ -31,6 +33,7 @@ fn main() {
         .add_plugins(LevelPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(MenuPlugin)
+        .add_plugins(PausePlugin)
         .add_plugins(SettingsPlugin)
         .run();
 }
