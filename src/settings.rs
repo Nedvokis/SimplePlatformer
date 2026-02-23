@@ -461,6 +461,9 @@ fn settings_update_text(
     mut texts: Query<&mut Text>,
 ) {
     for (row, children) in &rows {
+        if row.0 >= 100 {
+            continue;
+        }
         for child in children.iter() {
             if let Ok(mut text) = texts.get_mut(child) {
                 **text = row_text(row.0, &settings);
