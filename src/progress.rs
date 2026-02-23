@@ -43,3 +43,4 @@ pub fn save_progress(progress: &PlayerProgress) {
         std::fs::write(path, json).ok();
     }
 }
+

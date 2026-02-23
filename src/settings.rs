@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use bevy::window::{MonitorSelection, WindowMode};
 
+use crate::progress::{PlayerProgress, save_progress};
 use crate::states::{GameState, SettingsOrigin};
 
-const SETTINGS_ITEMS: usize = 6;
+const SETTINGS_ITEMS: usize = 7;
 const COLOR_SELECTED: Color = Color::srgb(0.3, 0.3, 0.7);
 const COLOR_NORMAL: Color = Color::srgb(0.15, 0.15, 0.15);
 
@@ -29,6 +30,9 @@ impl Default for GameSettings {
 #[derive(Resource, Default)]
 pub struct SettingsChanged(pub bool);
 
+#[derive(Resource, Default)]
+pub struct ConfirmingReset(pub bool);
+
 #[derive(Resource, Debug, Clone, Default)]
 pub struct SelectedSettingsItem(pub usize);
 
@@ -43,6 +47,7 @@ impl Plugin for SettingsPlugin {
         app.init_resource::<GameSettings>()
             .init_resource::<SelectedSettingsItem>()
             .init_resource::<SettingsChanged>()
+            .init_resource::<ConfirmingReset>()
             .add_systems(OnEnter(GameState::Settings), setup_settings)
             .add_systems(
                 Update,
@@ -65,7 +70,7 @@ fn volume_bar(volume: f32) -> String {
     format!("{} {}%", bar, (volume * 100.0).round() as u32)
 }
 
-fn row_text(index: usize, settings: &GameSettings) -> String {
+fn row_text(index: usize, settings: &GameSettings, confirming_reset: bool) -> String {
     match index {
         0 => format!("Music: {}", volume_bar(settings.music_volume)),
         1 => format!("Sound: {}", volume_bar(settings.sfx_volume)),
@@ -79,7 +84,14 @@ fn row_text(index: usize, settings: &GameSettings) -> String {
             format!("Window: {}", mode)
         }
         4 => "Save".to_string(),
-        5 => "Back".to_string(),
+        5 => {
+            if confirming_reset {
+                "Are you sure? Yes / No".to_string()
+            } else {
+                "Reset Progress".to_string()
+            }
+        }
+        6 => "Back".to_string(),
         _ => String::new(),
     }
 }
@@ -89,9 +101,11 @@ fn setup_settings(
     mut selected: ResMut<SelectedSettingsItem>,
     settings: Res<GameSettings>,
     mut changed: ResMut<SettingsChanged>,
+    mut confirming: ResMut<ConfirmingReset>,
 ) {
     selected.0 = 0;
     changed.0 = false;
+    confirming.0 = false;
 
     commands
         .spawn((
@@ -138,7 +152,7 @@ fn setup_settings(
                     ))
                     .with_children(|btn| {
                         btn.spawn((
-                            Text::new(row_text(i, &settings)),
+                            Text::new(row_text(i, &settings, false)),
                             TextFont {
                                 font_size: 22.0,
                                 ..default()
@@ -174,10 +188,16 @@ fn settings_adjust(
     origin: Res<SettingsOrigin>,
     mut windows: Query<&mut Window>,
     mut changed: ResMut<SettingsChanged>,
+    mut confirming: ResMut<ConfirmingReset>,
+    mut progress: ResMut<PlayerProgress>,
 ) {
-    // Escape: always go back
+    // Escape: cancel confirmation or go back
     if keyboard.just_pressed(KeyCode::Escape) {
-        go_back(&origin, &mut next_state);
+        if confirming.0 {
+            confirming.0 = false;
+        } else {
+            go_back(&origin, &mut next_state);
+        }
         return;
     }
 
@@ -189,6 +209,18 @@ fn settings_adjust(
                 return;
             }
             5 => {
+                if confirming.0 {
+                    // Yes - confirm reset
+                    progress.max_unlocked_level = 0;
+                    save_progress(&progress);
+                    confirming.0 = false;
+                } else {
+                    // Enter confirmation mode
+                    confirming.0 = true;
+                }
+                return;
+            }
+            6 => {
                 // Back
                 go_back(&origin, &mut next_state);
                 return;
@@ -201,6 +233,19 @@ fn settings_adjust(
     let right = keyboard.just_pressed(KeyCode::ArrowRight);
 
     if !left && !right {
+        return;
+    }
+
+    if confirming.0 && selected.0 == 5 {
+        if left {
+            // Yes
+            progress.max_unlocked_level = 0;
+            save_progress(&progress);
+            confirming.0 = false;
+        } else if right {
+            // No
+            confirming.0 = false;
+        }
         return;
     }
 
@@ -263,11 +308,14 @@ fn go_back(origin: &SettingsOrigin, next_state: &mut ResMut<NextState<GameState>
 fn settings_highlight(
     selected: Res<SelectedSettingsItem>,
     changed: Res<SettingsChanged>,
+    confirming: Res<ConfirmingReset>,
     mut rows: Query<(&SettingsRow, &mut BackgroundColor)>,
 ) {
     for (row, mut bg) in &mut rows {
         let is_selected = row.0 == selected.0;
-        if row.0 == 4 && changed.0 {
+        if confirming.0 && row.0 == 5 {
+            *bg = BackgroundColor(Color::srgb(0.7, 0.15, 0.15));
+        } else if row.0 == 4 && changed.0 {
             // Save row with unsaved changes
             if is_selected {
                 *bg = BackgroundColor(Color::srgb(0.2, 0.8, 0.2));
@@ -284,13 +332,14 @@ fn settings_highlight(
 
 fn settings_update_text(
     settings: Res<GameSettings>,
+    confirming: Res<ConfirmingReset>,
     rows: Query<(&SettingsRow, &Children)>,
     mut texts: Query<&mut Text>,
 ) {
     for (row, children) in &rows {
         for child in children.iter() {
             if let Ok(mut text) = texts.get_mut(child) {
-                **text = row_text(row.0, &settings);
+                **text = row_text(row.0, &settings, confirming.0);
             }
         }
     }
