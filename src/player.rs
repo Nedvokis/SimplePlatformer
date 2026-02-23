@@ -22,7 +22,7 @@ impl Plugin for PlayerPlugin {
         app.init_resource::<SpawnPoint>()
             .add_systems(OnEnter(GameState::Playing), spawn_player)
             .add_systems(
-                Update,
+                FixedUpdate,
                 (ground_detection, player_movement)
                     .chain()
                     .run_if(in_state(GameState::Playing)),
