@@ -3,7 +3,7 @@ use bevy::window::{MonitorSelection, WindowMode};
 
 use crate::states::{GameState, SettingsOrigin};
 
-const SETTINGS_ITEMS: usize = 5;
+const SETTINGS_ITEMS: usize = 6;
 const COLOR_SELECTED: Color = Color::srgb(0.3, 0.3, 0.7);
 const COLOR_NORMAL: Color = Color::srgb(0.15, 0.15, 0.15);
 
@@ -26,6 +26,9 @@ impl Default for GameSettings {
     }
 }
 
+#[derive(Resource, Default)]
+pub struct SettingsChanged(pub bool);
+
 #[derive(Resource, Debug, Clone, Default)]
 pub struct SelectedSettingsItem(pub usize);
 
@@ -39,6 +42,7 @@ impl Plugin for SettingsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GameSettings>()
             .init_resource::<SelectedSettingsItem>()
+            .init_resource::<SettingsChanged>()
             .add_systems(OnEnter(GameState::Settings), setup_settings)
             .add_systems(
                 Update,
@@ -74,7 +78,8 @@ fn row_text(index: usize, settings: &GameSettings) -> String {
             };
             format!("Window: {}", mode)
         }
-        4 => "Back".to_string(),
+        4 => "Save".to_string(),
+        5 => "Back".to_string(),
         _ => String::new(),
     }
 }
@@ -83,8 +88,10 @@ fn setup_settings(
     mut commands: Commands,
     mut selected: ResMut<SelectedSettingsItem>,
     settings: Res<GameSettings>,
+    mut changed: ResMut<SettingsChanged>,
 ) {
     selected.0 = 0;
+    changed.0 = false;
 
     commands
         .spawn((
@@ -166,6 +173,7 @@ fn settings_adjust(
     mut next_state: ResMut<NextState<GameState>>,
     origin: Res<SettingsOrigin>,
     mut windows: Query<&mut Window>,
+    mut changed: ResMut<SettingsChanged>,
 ) {
     // Escape: always go back
     if keyboard.just_pressed(KeyCode::Escape) {
@@ -173,10 +181,20 @@ fn settings_adjust(
         return;
     }
 
-    // Enter on "Back"
-    if keyboard.just_pressed(KeyCode::Enter) && selected.0 == 4 {
-        go_back(&origin, &mut next_state);
-        return;
+    if keyboard.just_pressed(KeyCode::Enter) {
+        match selected.0 {
+            4 => {
+                // Save
+                changed.0 = false;
+                return;
+            }
+            5 => {
+                // Back
+                go_back(&origin, &mut next_state);
+                return;
+            }
+            _ => {}
+        }
     }
 
     let left = keyboard.just_pressed(KeyCode::ArrowLeft);
@@ -194,6 +212,7 @@ fn settings_adjust(
             } else {
                 settings.music_volume = (settings.music_volume - 0.1).max(0.0);
             }
+            changed.0 = true;
         }
         1 => {
             // SFX volume
@@ -202,6 +221,7 @@ fn settings_adjust(
             } else {
                 settings.sfx_volume = (settings.sfx_volume - 0.1).max(0.0);
             }
+            changed.0 = true;
         }
         2 => {
             // Resolution toggle
@@ -215,6 +235,7 @@ fn settings_adjust(
                     .resolution
                     .set(settings.resolution.0 as f32, settings.resolution.1 as f32);
             }
+            changed.0 = true;
         }
         3 => {
             // Fullscreen toggle
@@ -226,6 +247,7 @@ fn settings_adjust(
                     WindowMode::Windowed
                 };
             }
+            changed.0 = true;
         }
         _ => {}
     }
@@ -240,10 +262,19 @@ fn go_back(origin: &SettingsOrigin, next_state: &mut ResMut<NextState<GameState>
 
 fn settings_highlight(
     selected: Res<SelectedSettingsItem>,
+    changed: Res<SettingsChanged>,
     mut rows: Query<(&SettingsRow, &mut BackgroundColor)>,
 ) {
     for (row, mut bg) in &mut rows {
-        if row.0 == selected.0 {
+        let is_selected = row.0 == selected.0;
+        if row.0 == 4 && changed.0 {
+            // Save row with unsaved changes
+            if is_selected {
+                *bg = BackgroundColor(Color::srgb(0.2, 0.8, 0.2));
+            } else {
+                *bg = BackgroundColor(Color::srgb(0.1, 0.4, 0.1));
+            }
+        } else if is_selected {
             *bg = BackgroundColor(COLOR_SELECTED);
         } else {
             *bg = BackgroundColor(COLOR_NORMAL);
