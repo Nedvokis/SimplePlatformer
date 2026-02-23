@@ -5,6 +5,9 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "0.18", default-features = false, features = ["2d"] }
+avian2d = "0.5"
+serde = { version = "1", features = ["derive"] }
+ron = "0.11"
 
 # Быстрая компиляция в dev-режиме
 [profile.dev]
