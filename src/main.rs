@@ -1,5 +1,6 @@
 mod camera;
 mod level;
+mod level_select;
 mod menu;
 mod pause;
 mod physics;
@@ -11,6 +12,7 @@ mod states;
 use bevy::prelude::*;
 use camera::CameraPlugin;
 use level::LevelPlugin;
+use level_select::LevelSelectPlugin;
 use menu::MenuPlugin;
 use pause::PausePlugin;
 use physics::PhysicsPlugin;
@@ -33,6 +35,7 @@ fn main() {
         .add_plugins(CameraPlugin)
         .add_plugins(PhysicsPlugin)
         .add_plugins(LevelPlugin)
+        .add_plugins(LevelSelectPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(ProgressPlugin)
         .add_plugins(MenuPlugin)

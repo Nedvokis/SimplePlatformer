@@ -145,7 +145,7 @@ fn menu_action(
 
     match selected.0 {
         0 => {
-            next_state.set(GameState::Playing);
+            next_state.set(GameState::LevelSelect);
         }
         1 => {
             *settings_origin = SettingsOrigin::Menu;
