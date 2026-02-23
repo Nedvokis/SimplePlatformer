@@ -59,7 +59,8 @@ impl Plugin for LevelPlugin {
             .add_systems(
                 Update,
                 (check_exit, check_spikes).run_if(in_state(GameState::Playing)),
-            );
+            )
+            .add_systems(OnEnter(GameState::LevelTransition), transition_to_playing);
     }
 }
 
@@ -144,15 +145,18 @@ fn check_exit(
                     crate::progress::save_progress(&progress);
                 }
                 if current_level.0 < LEVELS.len() {
-                    next_state.set(GameState::Playing);
+                    next_state.set(GameState::LevelTransition);
                 } else {
-                    current_level.0 = 0;
-                    next_state.set(GameState::Menu);
+                    next_state.set(GameState::LevelSelect);
                 }
                 return;
             }
         }
     }
+}
+
+fn transition_to_playing(mut next_state: ResMut<NextState<GameState>>) {
+    next_state.set(GameState::Playing);
 }
 
 fn check_spikes(
