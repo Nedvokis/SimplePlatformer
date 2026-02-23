@@ -2,15 +2,9 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-#[derive(Resource, Serialize, Deserialize, Clone)]
+#[derive(Resource, Serialize, Deserialize, Clone, Default)]
 pub struct PlayerProgress {
     pub max_unlocked_level: usize,
-}
-
-impl Default for PlayerProgress {
-    fn default() -> Self {
-        Self { max_unlocked_level: 0 }
-    }
 }
 
 pub struct ProgressPlugin;

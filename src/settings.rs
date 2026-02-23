@@ -180,6 +180,7 @@ fn settings_navigation(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn settings_adjust(
     keyboard: Res<ButtonInput<KeyCode>>,
     selected: Res<SelectedSettingsItem>,
