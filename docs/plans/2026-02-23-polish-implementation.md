@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Fix 3 bugs (tofu text, jerky movement, settings save) and add 3 features (level select, save system, 3 new levels).
+**Goal:** Fix 3 bugs (tofu text, jerky movement, settings save) and add 4 features (level select, save system, reset progress, 3 new levels).
 
 **Architecture:** Translate all UI to English. Add `Friction::ZERO` to player. Add `SettingsChanged` resource and "Save" button. New `GameState::LevelSelect` state with level select screen. New `src/progress.rs` module for save/load via JSON. Expand LEVELS array to 5.
 
@@ -283,7 +283,103 @@ git commit -m "feat: add player progress save/load system"
 
 ---
 
-## Task 6: Add LevelSelect state and screen
+## Task 6: Reset Progress button in settings
+
+**Files:**
+- Modify: `src/settings.rs`
+- Modify: `src/progress.rs`
+
+**Step 1: Add ConfirmingReset state**
+
+Add a resource to track whether the confirmation dialog is active:
+```rust
+#[derive(Resource, Default)]
+pub struct ConfirmingReset(pub bool);
+```
+
+Register: `.init_resource::<ConfirmingReset>()`
+
+**Step 2: Update SETTINGS_ITEMS from 6 to 7**
+
+```rust
+const SETTINGS_ITEMS: usize = 7;
+```
+
+Row layout becomes:
+- 0: Music
+- 1: Sound
+- 2: Resolution
+- 3: Window mode
+- 4: Save
+- 5: Reset Progress
+- 6: Back
+
+**Step 3: Update row_text for new indices**
+
+```rust
+4 => "Save".to_string(),
+5 => {
+    if confirming_reset {
+        "Are you sure? Yes / No".to_string()
+    } else {
+        "Reset Progress".to_string()
+    }
+}
+6 => "Back".to_string(),
+```
+
+Note: `row_text` needs a `confirming_reset: bool` parameter. Update its signature and all call sites.
+
+**Step 4: Handle Reset Progress action in settings_adjust**
+
+When Enter is pressed on index 5:
+- If `ConfirmingReset.0 == false`: set `ConfirmingReset.0 = true` (show confirmation)
+- If `ConfirmingReset.0 == true`: this state is handled by arrow keys (see Step 5)
+
+When Esc is pressed while `ConfirmingReset.0 == true`: cancel confirmation, set `ConfirmingReset.0 = false`, do NOT go back.
+
+**Step 5: Handle Yes/No in confirmation mode**
+
+When `ConfirmingReset.0 == true` and on row 5:
+- ArrowLeft or Enter: confirm reset — set `progress.max_unlocked_level = 0`, call `save_progress(&progress)`, set `ConfirmingReset.0 = false`
+- ArrowRight or Esc: cancel — set `ConfirmingReset.0 = false`
+
+Import `use crate::progress::{PlayerProgress, save_progress};`
+Add `mut progress: ResMut<PlayerProgress>` and `mut confirming: ResMut<ConfirmingReset>` to `settings_adjust`.
+
+**Step 6: Special highlight for Reset row**
+
+When confirming: row 5 gets red background `Color::srgb(0.7, 0.15, 0.15)` regardless of selection.
+When not confirming: normal highlight behavior.
+
+**Step 7: Reset ConfirmingReset on enter**
+
+In `setup_settings`: `confirming.0 = false;`
+
+**Step 8: Add reset_progress function to progress.rs**
+
+```rust
+pub fn reset_progress(progress: &mut PlayerProgress) {
+    progress.max_unlocked_level = 0;
+    save_progress(progress);
+}
+```
+
+**Step 9: Verify**
+
+Run: `cargo run`
+Expected: Settings has "Reset Progress" row. Enter → text changes to "Are you sure? Yes / No" with red background. Left/Enter = reset (progress cleared). Right/Esc = cancel.
+
+**Step 10: Commit**
+
+```bash
+git add src/settings.rs src/progress.rs
+git commit -m "feat: add Reset Progress button with confirmation dialog"
+```
+
+---
+
+## Task 7: Add LevelSelect state and screen (was Task 6)
 
 **Files:**
 - Modify: `src/states.rs`
@@ -354,7 +450,7 @@ git commit -m "feat: add level select screen with locked/unlocked levels"
 
 ---
 
-## Task 7: Create 3 new levels (5 total)
+## Task 8: Create 3 new levels (5 total)
 
 **Files:**
 - Create: `assets/levels/level_03.ron`
@@ -527,7 +623,7 @@ git commit -m "feat: add 3 new levels (5 total)"
 
 ---
 
-## Task 8: Polish and final verification
+## Task 9: Polish and final verification
 
 **Files:**
 - Modify: various
@@ -548,6 +644,8 @@ Verify:
 6. Complete all 5 → back to menu
 7. Restart app → progress saved, levels still unlocked
 8. Pause works: Resume / Settings / Main Menu in English
+9. Settings: Reset Progress → confirmation → Yes resets, No cancels
+10. After reset: only level 1 unlocked in level select
 
 **Step 3: Commit**
 
@@ -567,6 +665,7 @@ git commit -m "chore: clippy fixes and final polish"
 | 3 | Settings Save button | settings.rs | Bug fix |
 | 4 | Add save system deps | Cargo.toml | Setup |
 | 5 | Progress save/load | progress.rs, level.rs | Feature |
-| 6 | Level select screen | level_select.rs, states.rs, menu.rs | Feature |
-| 7 | 3 new levels | assets/levels/, level.rs | Feature |
-| 8 | Polish & verify | various | Polish |
+| 6 | Reset Progress button | settings.rs, progress.rs | Feature |
+| 7 | Level select screen | level_select.rs, states.rs, menu.rs | Feature |
+| 8 | 3 new levels | assets/levels/, level.rs | Feature |
+| 9 | Polish & verify | various | Polish |
