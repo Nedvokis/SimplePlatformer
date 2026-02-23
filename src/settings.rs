@@ -40,6 +40,14 @@ pub struct SelectedSettingsItem(pub usize);
 #[derive(Component, Debug, Clone)]
 pub struct SettingsRow(pub usize);
 
+/// Marker for the confirmation overlay root entity.
+#[derive(Component)]
+struct ResetOverlay;
+
+/// Which confirmation button is selected: 0 = Yes, 1 = No.
+#[derive(Resource, Default)]
+pub struct SelectedConfirmItem(pub usize);
+
 pub struct SettingsPlugin;
 
 impl Plugin for SettingsPlugin {
@@ -48,6 +56,7 @@ impl Plugin for SettingsPlugin {
             .init_resource::<SelectedSettingsItem>()
             .init_resource::<SettingsChanged>()
             .init_resource::<ConfirmingReset>()
+            .init_resource::<SelectedConfirmItem>()
             .add_systems(OnEnter(GameState::Settings), setup_settings)
             .add_systems(
                 Update,
@@ -70,7 +79,7 @@ fn volume_bar(volume: f32) -> String {
     format!("{} {}%", bar, (volume * 100.0).round() as u32)
 }
 
-fn row_text(index: usize, settings: &GameSettings, confirming_reset: bool) -> String {
+fn row_text(index: usize, settings: &GameSettings) -> String {
     match index {
         0 => format!("Music: {}", volume_bar(settings.music_volume)),
         1 => format!("Sound: {}", volume_bar(settings.sfx_volume)),
@@ -84,13 +93,7 @@ fn row_text(index: usize, settings: &GameSettings, confirming_reset: bool) -> St
             format!("Window: {}", mode)
         }
         4 => "Save".to_string(),
-        5 => {
-            if confirming_reset {
-                "Are you sure? Yes / No".to_string()
-            } else {
-                "Reset Progress".to_string()
-            }
-        }
+        5 => "Reset Progress".to_string(),
         6 => "Back".to_string(),
         _ => String::new(),
     }
@@ -152,7 +155,7 @@ fn setup_settings(
                     ))
                     .with_children(|btn| {
                         btn.spawn((
-                            Text::new(row_text(i, &settings, false)),
+                            Text::new(row_text(i, &settings)),
                             TextFont {
                                 font_size: 22.0,
                                 ..default()
@@ -167,7 +170,11 @@ fn setup_settings(
 fn settings_navigation(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut selected: ResMut<SelectedSettingsItem>,
+    confirming: Res<ConfirmingReset>,
 ) {
+    if confirming.0 {
+        return;
+    }
     if keyboard.just_pressed(KeyCode::ArrowUp) {
         selected.0 = if selected.0 == 0 {
             SETTINGS_ITEMS - 1
@@ -180,8 +187,81 @@ fn settings_navigation(
     }
 }
 
+fn spawn_reset_overlay(commands: &mut Commands, selected_confirm: &mut ResMut<SelectedConfirmItem>) {
+    selected_confirm.0 = 1; // Default to "No" for safety
+
+    commands
+        .spawn((
+            ResetOverlay,
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                position_type: PositionType::Absolute,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+            GlobalZIndex(200),
+        ))
+        .with_children(|overlay| {
+            overlay
+                .spawn(Node {
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                })
+                .with_children(|panel| {
+                    panel.spawn((
+                        Text::new("Reset Progress?"),
+                        TextFont { font_size: 32.0, ..default() },
+                        TextColor(Color::WHITE),
+                        Node { margin: UiRect::bottom(Val::Px(10.0)), ..default() },
+                    ));
+                    panel.spawn((
+                        Text::new("All level progress will be lost."),
+                        TextFont { font_size: 18.0, ..default() },
+                        TextColor(Color::srgb(0.8, 0.4, 0.4)),
+                        Node { margin: UiRect::bottom(Val::Px(30.0)), ..default() },
+                    ));
+                    panel
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Row,
+                            justify_content: JustifyContent::Center,
+                            column_gap: Val::Px(20.0),
+                            ..default()
+                        })
+                        .with_children(|row| {
+                            for (i, label) in ["Yes", "No"].iter().enumerate() {
+                                row.spawn((
+                                    Button,
+                                    SettingsRow(100 + i),
+                                    Node {
+                                        width: Val::Px(120.0),
+                                        height: Val::Px(45.0),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    BackgroundColor(COLOR_NORMAL),
+                                ))
+                                .with_children(|btn| {
+                                    btn.spawn((
+                                        Text::new(*label),
+                                        TextFont { font_size: 22.0, ..default() },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                });
+                            }
+                        });
+                });
+        });
+}
+
 #[allow(clippy::too_many_arguments)]
 fn settings_adjust(
+    mut commands: Commands,
     keyboard: Res<ButtonInput<KeyCode>>,
     selected: Res<SelectedSettingsItem>,
     mut settings: ResMut<GameSettings>,
@@ -191,38 +271,53 @@ fn settings_adjust(
     mut changed: ResMut<SettingsChanged>,
     mut confirming: ResMut<ConfirmingReset>,
     mut progress: ResMut<PlayerProgress>,
+    mut selected_confirm: ResMut<SelectedConfirmItem>,
+    overlay_query: Query<Entity, With<ResetOverlay>>,
 ) {
-    // Escape: cancel confirmation or go back
-    if keyboard.just_pressed(KeyCode::Escape) {
-        if confirming.0 {
+    if confirming.0 {
+        if keyboard.just_pressed(KeyCode::Escape) {
+            for entity in &overlay_query {
+                commands.entity(entity).despawn();
+            }
             confirming.0 = false;
-        } else {
-            go_back(&origin, &mut next_state);
+            return;
         }
+        if keyboard.just_pressed(KeyCode::ArrowLeft) {
+            selected_confirm.0 = 0;
+        }
+        if keyboard.just_pressed(KeyCode::ArrowRight) {
+            selected_confirm.0 = 1;
+        }
+        if keyboard.just_pressed(KeyCode::Enter) {
+            if selected_confirm.0 == 0 {
+                progress.max_unlocked_level = 0;
+                save_progress(&progress);
+            }
+            for entity in &overlay_query {
+                commands.entity(entity).despawn();
+            }
+            confirming.0 = false;
+        }
+        return;
+    }
+
+    if keyboard.just_pressed(KeyCode::Escape) {
+        go_back(&origin, &mut next_state);
         return;
     }
 
     if keyboard.just_pressed(KeyCode::Enter) {
         match selected.0 {
             4 => {
-                // Save
                 changed.0 = false;
                 return;
             }
             5 => {
-                if confirming.0 {
-                    // Yes - confirm reset
-                    progress.max_unlocked_level = 0;
-                    save_progress(&progress);
-                    confirming.0 = false;
-                } else {
-                    // Enter confirmation mode
-                    confirming.0 = true;
-                }
+                confirming.0 = true;
+                spawn_reset_overlay(&mut commands, &mut selected_confirm);
                 return;
             }
             6 => {
-                // Back
                 go_back(&origin, &mut next_state);
                 return;
             }
@@ -237,22 +332,8 @@ fn settings_adjust(
         return;
     }
 
-    if confirming.0 && selected.0 == 5 {
-        if left {
-            // Yes
-            progress.max_unlocked_level = 0;
-            save_progress(&progress);
-            confirming.0 = false;
-        } else if right {
-            // No
-            confirming.0 = false;
-        }
-        return;
-    }
-
     match selected.0 {
         0 => {
-            // Music volume
             if right {
                 settings.music_volume = (settings.music_volume + 0.1).min(1.0);
             } else {
@@ -261,7 +342,6 @@ fn settings_adjust(
             changed.0 = true;
         }
         1 => {
-            // SFX volume
             if right {
                 settings.sfx_volume = (settings.sfx_volume + 0.1).min(1.0);
             } else {
@@ -270,21 +350,17 @@ fn settings_adjust(
             changed.0 = true;
         }
         2 => {
-            // Resolution toggle
             settings.resolution = if settings.resolution == (1280, 720) {
                 (1920, 1080)
             } else {
                 (1280, 720)
             };
             if let Ok(mut window) = windows.single_mut() {
-                window
-                    .resolution
-                    .set(settings.resolution.0 as f32, settings.resolution.1 as f32);
+                window.resolution.set(settings.resolution.0 as f32, settings.resolution.1 as f32);
             }
             changed.0 = true;
         }
         3 => {
-            // Fullscreen toggle
             settings.fullscreen = !settings.fullscreen;
             if let Ok(mut window) = windows.single_mut() {
                 window.mode = if settings.fullscreen {
@@ -310,14 +386,27 @@ fn settings_highlight(
     selected: Res<SelectedSettingsItem>,
     changed: Res<SettingsChanged>,
     confirming: Res<ConfirmingReset>,
+    selected_confirm: Res<SelectedConfirmItem>,
     mut rows: Query<(&SettingsRow, &mut BackgroundColor)>,
 ) {
     for (row, mut bg) in &mut rows {
         let is_selected = row.0 == selected.0;
-        if confirming.0 && row.0 == 5 {
-            *bg = BackgroundColor(Color::srgb(0.7, 0.15, 0.15));
-        } else if row.0 == 4 && changed.0 {
-            // Save row with unsaved changes
+
+        if row.0 >= 100 {
+            let confirm_index = row.0 - 100;
+            if confirming.0 && confirm_index == selected_confirm.0 {
+                if confirm_index == 0 {
+                    *bg = BackgroundColor(Color::srgb(0.7, 0.15, 0.15));
+                } else {
+                    *bg = BackgroundColor(COLOR_SELECTED);
+                }
+            } else {
+                *bg = BackgroundColor(COLOR_NORMAL);
+            }
+            continue;
+        }
+
+        if row.0 == 4 && changed.0 {
             if is_selected {
                 *bg = BackgroundColor(Color::srgb(0.2, 0.8, 0.2));
             } else {
@@ -333,14 +422,13 @@ fn settings_highlight(
 
 fn settings_update_text(
     settings: Res<GameSettings>,
-    confirming: Res<ConfirmingReset>,
     rows: Query<(&SettingsRow, &Children)>,
     mut texts: Query<&mut Text>,
 ) {
     for (row, children) in &rows {
         for child in children.iter() {
             if let Ok(mut text) = texts.get_mut(child) {
-                **text = row_text(row.0, &settings, confirming.0);
+                **text = row_text(row.0, &settings);
             }
         }
     }
