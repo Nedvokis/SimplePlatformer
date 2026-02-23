@@ -1,0 +1,31 @@
+LevelData(
+    name: "Начало",
+    spawn: (2.0, 2.0),
+    exit: (25.0, 5.0),
+    tiles: [
+        // Ground floor
+        TileEntry(x: 0, y: 0, kind: Platform),
+        TileEntry(x: 1, y: 0, kind: Platform),
+        TileEntry(x: 2, y: 0, kind: Platform),
+        TileEntry(x: 3, y: 0, kind: Platform),
+        TileEntry(x: 4, y: 0, kind: Platform),
+        TileEntry(x: 5, y: 0, kind: Platform),
+        TileEntry(x: 6, y: 0, kind: Platform),
+        // Gap
+        TileEntry(x: 9, y: 0, kind: Platform),
+        TileEntry(x: 10, y: 0, kind: Platform),
+        TileEntry(x: 11, y: 0, kind: Platform),
+        // Spikes
+        TileEntry(x: 12, y: 0, kind: Spikes),
+        TileEntry(x: 13, y: 0, kind: Platform),
+        // Rising platforms
+        TileEntry(x: 16, y: 2, kind: Platform),
+        TileEntry(x: 17, y: 2, kind: Platform),
+        TileEntry(x: 20, y: 4, kind: Platform),
+        TileEntry(x: 21, y: 4, kind: Platform),
+        // Exit platform
+        TileEntry(x: 24, y: 4, kind: Platform),
+        TileEntry(x: 25, y: 4, kind: Platform),
+        TileEntry(x: 26, y: 4, kind: Platform),
+    ],
+)
