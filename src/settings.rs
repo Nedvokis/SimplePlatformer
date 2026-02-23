@@ -57,24 +57,24 @@ impl Plugin for SettingsPlugin {
 fn volume_bar(volume: f32) -> String {
     let filled = (volume * 10.0).round() as usize;
     let empty = 10 - filled;
-    let bar: String = "\u{2588}".repeat(filled) + &"\u{2591}".repeat(empty);
+    let bar: String = "#".repeat(filled) + &"-".repeat(empty);
     format!("{} {}%", bar, (volume * 100.0).round() as u32)
 }
 
 fn row_text(index: usize, settings: &GameSettings) -> String {
     match index {
-        0 => format!("Музыка: {}", volume_bar(settings.music_volume)),
-        1 => format!("Звуки: {}", volume_bar(settings.sfx_volume)),
-        2 => format!("Разрешение: {}x{}", settings.resolution.0, settings.resolution.1),
+        0 => format!("Music: {}", volume_bar(settings.music_volume)),
+        1 => format!("Sound: {}", volume_bar(settings.sfx_volume)),
+        2 => format!("Resolution: {}x{}", settings.resolution.0, settings.resolution.1),
         3 => {
             let mode = if settings.fullscreen {
-                "Полный экран"
+                "Fullscreen"
             } else {
-                "Оконный"
+                "Windowed"
             };
-            format!("Экран: {}", mode)
+            format!("Window: {}", mode)
         }
-        4 => "Назад".to_string(),
+        4 => "Back".to_string(),
         _ => String::new(),
     }
 }
@@ -101,7 +101,7 @@ fn setup_settings(
         .with_children(|parent| {
             // Title
             parent.spawn((
-                Text::new("НАСТРОЙКИ"),
+                Text::new("SETTINGS"),
                 TextFont {
                     font_size: 40.0,
                     ..default()
@@ -173,7 +173,7 @@ fn settings_adjust(
         return;
     }
 
-    // Enter on "Назад"
+    // Enter on "Back"
     if keyboard.just_pressed(KeyCode::Enter) && selected.0 == 4 {
         go_back(&origin, &mut next_state);
         return;

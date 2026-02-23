@@ -81,7 +81,7 @@ fn spawn_pause_overlay(mut commands: Commands, mut selected: ResMut<SelectedPaus
                 .with_children(|panel| {
                     // Title
                     panel.spawn((
-                        Text::new("ПАУЗА"),
+                        Text::new("PAUSED"),
                         TextFont {
                             font_size: 40.0,
                             ..default()
@@ -95,9 +95,9 @@ fn spawn_pause_overlay(mut commands: Commands, mut selected: ResMut<SelectedPaus
 
                     // Buttons
                     let buttons = [
-                        ("Продолжить", PauseAction::Resume),
-                        ("Настройки", PauseAction::Settings),
-                        ("В меню", PauseAction::ToMenu),
+                        ("Resume", PauseAction::Resume),
+                        ("Settings", PauseAction::Settings),
+                        ("Main Menu", PauseAction::ToMenu),
                     ];
 
                     for (label, action) in buttons {

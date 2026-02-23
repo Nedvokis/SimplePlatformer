@@ -66,9 +66,9 @@ fn setup_menu(mut commands: Commands, mut selected: ResMut<SelectedMenuItem>) {
 
             // Buttons
             let buttons = [
-                ("Начать игру", MenuAction::StartGame),
-                ("Настройки", MenuAction::Settings),
-                ("Выйти", MenuAction::Exit),
+                ("Play", MenuAction::StartGame),
+                ("Settings", MenuAction::Settings),
+                ("Quit", MenuAction::Exit),
             ];
 
             for (label, action) in buttons {
