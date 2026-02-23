@@ -1,4 +1,7 @@
+mod states;
+
 use bevy::prelude::*;
+use states::StatesPlugin;
 
 fn main() {
     App::new()
@@ -10,5 +13,6 @@ fn main() {
             }),
             ..default()
         }))
+        .add_plugins(StatesPlugin)
         .run();
 }
