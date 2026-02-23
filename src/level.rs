@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use serde::Deserialize;
 
 use crate::player::{Player, SpawnPoint};
+use crate::progress::PlayerProgress;
 use crate::states::GameState;
 
 #[derive(Deserialize)]
@@ -125,12 +126,17 @@ fn check_exit(
     exit_query: Query<&CollidingEntities, With<Exit>>,
     player_query: Query<(), With<Player>>,
     mut current_level: ResMut<CurrentLevel>,
+    mut progress: ResMut<PlayerProgress>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     for colliding in &exit_query {
         for &entity in colliding.iter() {
             if player_query.get(entity).is_ok() {
                 current_level.0 += 1;
+                if current_level.0 > progress.max_unlocked_level {
+                    progress.max_unlocked_level = current_level.0;
+                    crate::progress::save_progress(&progress);
+                }
                 if current_level.0 < LEVELS.len() {
                     next_state.set(GameState::Playing);
                 } else {

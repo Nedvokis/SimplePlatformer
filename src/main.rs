@@ -4,6 +4,7 @@ mod menu;
 mod pause;
 mod physics;
 mod player;
+mod progress;
 mod settings;
 mod states;
 
@@ -14,6 +15,7 @@ use menu::MenuPlugin;
 use pause::PausePlugin;
 use physics::PhysicsPlugin;
 use player::PlayerPlugin;
+use progress::ProgressPlugin;
 use settings::SettingsPlugin;
 use states::StatesPlugin;
 
@@ -32,6 +34,7 @@ fn main() {
         .add_plugins(PhysicsPlugin)
         .add_plugins(LevelPlugin)
         .add_plugins(PlayerPlugin)
+        .add_plugins(ProgressPlugin)
         .add_plugins(MenuPlugin)
         .add_plugins(PausePlugin)
         .add_plugins(SettingsPlugin)
