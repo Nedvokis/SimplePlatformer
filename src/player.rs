@@ -15,12 +15,19 @@ pub struct GroundSensor;
 #[derive(Resource, Default)]
 pub struct SpawnPoint(pub Vec2);
 
+#[derive(Resource, Default)]
+pub struct DeathCounter {
+    pub current_level: usize,
+    pub total: usize,
+}
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SpawnPoint>()
-            .add_systems(OnEnter(GameState::Playing), spawn_player)
+            .init_resource::<DeathCounter>()
+            .add_systems(OnEnter(GameState::Playing), (spawn_player, reset_level_deaths))
             .add_systems(
                 FixedUpdate,
                 (ground_detection, player_movement)
@@ -94,14 +101,21 @@ fn player_movement(
     }
 }
 
+fn reset_level_deaths(mut counter: ResMut<DeathCounter>) {
+    counter.current_level = 0;
+}
+
 fn player_death(
     mut query: Query<(&mut Transform, &mut LinearVelocity), With<Player>>,
     spawn_point: Res<SpawnPoint>,
+    mut counter: ResMut<DeathCounter>,
 ) {
     for (mut transform, mut velocity) in &mut query {
         if transform.translation.y < -500.0 {
             transform.translation = spawn_point.0.extend(0.0);
             *velocity = LinearVelocity::ZERO;
+            counter.current_level += 1;
+            counter.total += 1;
         }
     }
 }
