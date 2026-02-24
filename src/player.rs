@@ -119,3 +119,87 @@ fn player_death(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn death_counter_increments_on_fall() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<SpawnPoint>();
+        app.init_resource::<DeathCounter>();
+        app.add_systems(Update, player_death);
+
+        app.world_mut().spawn((
+            Player,
+            Transform::from_xyz(0.0, -600.0, 0.0),
+            LinearVelocity::ZERO,
+        ));
+
+        app.update();
+
+        let counter = app.world().resource::<DeathCounter>();
+        assert_eq!(counter.current_level, 1);
+    }
+
+    #[test]
+    fn no_death_above_threshold() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<SpawnPoint>();
+        app.init_resource::<DeathCounter>();
+        app.add_systems(Update, player_death);
+
+        app.world_mut().spawn((
+            Player,
+            Transform::from_xyz(0.0, 100.0, 0.0),
+            LinearVelocity::ZERO,
+        ));
+
+        app.update();
+
+        let counter = app.world().resource::<DeathCounter>();
+        assert_eq!(counter.current_level, 0);
+    }
+
+    #[test]
+    fn respawn_resets_position_and_velocity() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.insert_resource(SpawnPoint(Vec2::new(100.0, 200.0)));
+        app.init_resource::<DeathCounter>();
+        app.add_systems(Update, player_death);
+
+        let entity = app.world_mut().spawn((
+            Player,
+            Transform::from_xyz(0.0, -600.0, 0.0),
+            LinearVelocity(Vec2::new(300.0, -400.0)),
+        )).id();
+
+        app.update();
+
+        let transform = app.world().entity(entity).get::<Transform>().unwrap();
+        assert_eq!(transform.translation.x, 100.0);
+        assert_eq!(transform.translation.y, 200.0);
+
+        let velocity = app.world().entity(entity).get::<LinearVelocity>().unwrap();
+        assert_eq!(velocity.x, 0.0);
+        assert_eq!(velocity.y, 0.0);
+    }
+
+    #[test]
+    fn reset_level_deaths_clears_current() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.insert_resource(DeathCounter { current_level: 5, total: 10 });
+        app.add_systems(Update, reset_level_deaths);
+
+        app.update();
+
+        let counter = app.world().resource::<DeathCounter>();
+        assert_eq!(counter.current_level, 0);
+        assert_eq!(counter.total, 10);
+    }
+}
