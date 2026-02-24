@@ -39,6 +39,9 @@ pub struct Spikes;
 #[derive(Component)]
 pub struct Exit;
 
+#[derive(Component)]
+pub struct DeathHud;
+
 #[derive(Resource)]
 pub struct CurrentLevel(pub usize);
 
@@ -57,10 +60,10 @@ pub struct LevelPlugin;
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(CurrentLevel(0))
-            .add_systems(OnEnter(GameState::Playing), load_level)
+            .add_systems(OnEnter(GameState::Playing), (load_level, spawn_hud))
             .add_systems(
                 Update,
-                (check_exit, check_spikes).run_if(in_state(GameState::Playing)),
+                (check_exit, check_spikes, update_hud).run_if(in_state(GameState::Playing)),
             )
             .add_systems(OnEnter(GameState::LevelTransition), transition_to_playing);
     }
@@ -218,6 +221,36 @@ fn check_exit(
 
 fn transition_to_playing(mut next_state: ResMut<NextState<GameState>>) {
     next_state.set(GameState::Playing);
+}
+
+fn spawn_hud(mut commands: Commands) {
+    commands.spawn((
+        DeathHud,
+        Text::new("Deaths: 0"),
+        TextFont {
+            font_size: 24.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(20.0),
+            top: Val::Px(20.0),
+            ..default()
+        },
+        DespawnOnExit::<GameState>(GameState::Playing),
+    ));
+}
+
+fn update_hud(
+    counter: Res<DeathCounter>,
+    mut query: Query<&mut Text, With<DeathHud>>,
+) {
+    if counter.is_changed() {
+        for mut text in &mut query {
+            **text = format!("Deaths: {}", counter.current_level);
+        }
+    }
 }
 
 fn check_spikes(
