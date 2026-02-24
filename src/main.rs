@@ -8,6 +8,7 @@ mod player;
 mod progress;
 mod settings;
 mod states;
+mod victory;
 
 use bevy::prelude::*;
 use camera::CameraPlugin;
@@ -20,6 +21,7 @@ use player::PlayerPlugin;
 use progress::ProgressPlugin;
 use settings::SettingsPlugin;
 use states::StatesPlugin;
+use victory::VictoryPlugin;
 
 fn main() {
     App::new()
@@ -41,5 +43,6 @@ fn main() {
         .add_plugins(MenuPlugin)
         .add_plugins(PausePlugin)
         .add_plugins(SettingsPlugin)
+        .add_plugins(VictoryPlugin)
         .run();
 }
