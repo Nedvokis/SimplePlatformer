@@ -115,3 +115,21 @@ fn victory_action(
         next_state.set(GameState::Menu);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn death_comment_special_values() {
+        assert_eq!(death_comment(0), " - flawless!");
+        assert_eq!(death_comment(69), " - nice");
+        assert_eq!(death_comment(42), " - the answer!");
+        assert_eq!(death_comment(100), " - centurion!");
+        assert_eq!(death_comment(10), "");
+        assert_eq!(death_comment(201), " - respect for perseverance!");
+        assert_eq!(death_comment(500), " - respect for perseverance!");
+        // 200 exactly should not trigger the >200 branch
+        assert_eq!(death_comment(200), "");
+    }
+}
