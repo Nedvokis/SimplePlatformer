@@ -14,6 +14,9 @@ tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter", "regist
 tracing = "0.1"
 chrono = "0.4"
 
+[dev-dependencies]
+tempfile = "3"
+
 # Быстрая компиляция в dev-режиме
 [profile.dev]
 opt-level = 1
