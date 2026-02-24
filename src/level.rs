@@ -199,10 +199,13 @@ fn check_exit(
     mut current_level: ResMut<CurrentLevel>,
     mut progress: ResMut<PlayerProgress>,
     mut next_state: ResMut<NextState<GameState>>,
+    mut counter: ResMut<DeathCounter>,
 ) {
     for colliding in &exit_query {
         for &entity in colliding.iter() {
             if player_query.get(entity).is_ok() {
+                counter.total += counter.current_level;
+
                 current_level.0 += 1;
                 if current_level.0 > progress.max_unlocked_level {
                     progress.max_unlocked_level = current_level.0;
@@ -211,7 +214,7 @@ fn check_exit(
                 if current_level.0 < LEVELS.len() {
                     next_state.set(GameState::LevelTransition);
                 } else {
-                    next_state.set(GameState::LevelSelect);
+                    next_state.set(GameState::Victory);
                 }
                 return;
             }

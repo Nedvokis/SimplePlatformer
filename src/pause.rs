@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::player::DeathCounter;
 use crate::states::{GameState, SettingsOrigin};
 
 /// Tracks which pause menu button is currently selected (0-indexed).
@@ -181,6 +182,7 @@ fn pause_action(
     selected: Res<SelectedPauseItem>,
     mut next_state: ResMut<NextState<GameState>>,
     mut settings_origin: ResMut<SettingsOrigin>,
+    mut commands: Commands,
     buttons: Query<(&PauseAction, &Interaction)>,
 ) {
     let enter = keyboard.just_pressed(KeyCode::Enter);
@@ -199,6 +201,7 @@ fn pause_action(
             next_state.set(GameState::Settings);
         }
         2 => {
+            commands.remove_resource::<DeathCounter>();
             next_state.set(GameState::Menu);
         }
         _ => {}
