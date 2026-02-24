@@ -235,7 +235,6 @@ fn check_spikes(
                     *velocity = LinearVelocity::ZERO;
                 }
                 counter.current_level += 1;
-                counter.total += 1;
                 return;
             }
         }
