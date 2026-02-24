@@ -9,6 +9,7 @@ pub enum GameState {
     Playing,
     Paused,
     Settings,
+    Victory,
 }
 
 /// Tracks where Settings was opened from, to return correctly.
