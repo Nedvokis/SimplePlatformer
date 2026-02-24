@@ -280,3 +280,113 @@ fn check_spikes(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tile(x: i32, y: i32, kind: TileKind) -> TileEntry {
+        TileEntry { x, y, kind }
+    }
+
+    #[test]
+    fn merge_adjacent_platforms() {
+        let tiles = vec![
+            tile(0, 0, TileKind::Platform),
+            tile(1, 0, TileKind::Platform),
+            tile(2, 0, TileKind::Platform),
+        ];
+        let runs = merge_platform_runs(&tiles);
+        assert_eq!(runs.len(), 1);
+        assert_eq!(runs[0], (0, 0, 3));
+    }
+
+    #[test]
+    fn merge_with_gap() {
+        let tiles = vec![
+            tile(0, 0, TileKind::Platform),
+            tile(1, 0, TileKind::Platform),
+            tile(5, 0, TileKind::Platform),
+            tile(6, 0, TileKind::Platform),
+        ];
+        let runs = merge_platform_runs(&tiles);
+        assert_eq!(runs.len(), 2);
+        assert!(runs.contains(&(0, 0, 2)));
+        assert!(runs.contains(&(5, 0, 2)));
+    }
+
+    #[test]
+    fn spikes_not_merged() {
+        let tiles = vec![
+            tile(0, 0, TileKind::Platform),
+            tile(1, 0, TileKind::Spikes),
+            tile(2, 0, TileKind::Platform),
+        ];
+        let runs = merge_platform_runs(&tiles);
+        assert_eq!(runs.len(), 2);
+        assert!(runs.contains(&(0, 0, 1)));
+        assert!(runs.contains(&(2, 0, 1)));
+    }
+
+    #[test]
+    fn different_rows() {
+        let tiles = vec![
+            tile(0, 0, TileKind::Platform),
+            tile(1, 0, TileKind::Platform),
+            tile(0, 1, TileKind::Platform),
+            tile(1, 1, TileKind::Platform),
+        ];
+        let runs = merge_platform_runs(&tiles);
+        assert_eq!(runs.len(), 2);
+        assert!(runs.contains(&(0, 0, 2)));
+        assert!(runs.contains(&(0, 1, 2)));
+    }
+
+    #[test]
+    fn empty_tiles() {
+        let runs = merge_platform_runs(&[]);
+        assert!(runs.is_empty());
+    }
+
+    #[test]
+    fn single_platform() {
+        let tiles = vec![tile(5, 3, TileKind::Platform)];
+        let runs = merge_platform_runs(&tiles);
+        assert_eq!(runs.len(), 1);
+        assert_eq!(runs[0], (5, 3, 1));
+    }
+
+    #[test]
+    fn parse_level_from_ron() {
+        let ron_str = r#"LevelData(
+            name: "Test Level",
+            spawn: (1.0, 2.0),
+            exit: (10.0, 5.0),
+            tiles: [
+                TileEntry(x: 0, y: 0, kind: Platform),
+                TileEntry(x: 1, y: 0, kind: Spikes),
+            ],
+        )"#;
+        let level: LevelData = ron::from_str(ron_str).expect("Failed to parse RON");
+        assert_eq!(level.name, "Test Level");
+        assert_eq!(level.spawn, (1.0, 2.0));
+        assert_eq!(level.exit, (10.0, 5.0));
+        assert_eq!(level.tiles.len(), 2);
+        assert!(matches!(level.tiles[0].kind, TileKind::Platform));
+        assert!(matches!(level.tiles[1].kind, TileKind::Spikes));
+    }
+
+    #[test]
+    fn parse_all_level_files() {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        for level_path in LEVELS {
+            let full_path = format!("{}/{}", manifest_dir, level_path);
+            let contents = std::fs::read_to_string(&full_path)
+                .unwrap_or_else(|e| panic!("Failed to read {}: {}", full_path, e));
+            let level: LevelData = ron::from_str(&contents)
+                .unwrap_or_else(|e| panic!("Failed to parse {}: {}", full_path, e));
+            assert!(!level.name.is_empty(), "Level {} has empty name", level_path);
+            assert!(!level.tiles.is_empty(), "Level {} has no tiles", level_path);
+        }
+    }
+}
