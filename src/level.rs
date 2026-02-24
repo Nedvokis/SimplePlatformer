@@ -4,7 +4,7 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 use serde::Deserialize;
 
-use crate::player::{Player, SpawnPoint};
+use crate::player::{Player, SpawnPoint, DeathCounter};
 use crate::progress::PlayerProgress;
 use crate::states::GameState;
 
@@ -225,6 +225,7 @@ fn check_spikes(
     player_query: Query<(), With<Player>>,
     mut player_transform_query: Query<(&mut Transform, &mut LinearVelocity), With<Player>>,
     spawn_point: Res<SpawnPoint>,
+    mut counter: ResMut<DeathCounter>,
 ) {
     for colliding in &spikes_query {
         for &entity in colliding.iter() {
@@ -233,6 +234,8 @@ fn check_spikes(
                     transform.translation = spawn_point.0.extend(0.0);
                     *velocity = LinearVelocity::ZERO;
                 }
+                counter.current_level += 1;
+                counter.total += 1;
                 return;
             }
         }
