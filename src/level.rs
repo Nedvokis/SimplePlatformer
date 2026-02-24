@@ -122,6 +122,8 @@ fn load_level(mut commands: Commands, current_level: Res<CurrentLevel>, mut spaw
     let level: LevelData = ron::from_str(&contents)
         .unwrap_or_else(|e| panic!("Failed to parse level file {}: {}", LEVELS[index], e));
 
+    info!("Loaded level {} '{}' ({} tiles)", index + 1, level.name, level.tiles.len());
+
     // Set spawn point
     spawn_point.0 = Vec2::new(level.spawn.0 * TILE_SIZE, level.spawn.1 * TILE_SIZE);
 
@@ -211,6 +213,7 @@ fn check_exit(
                     progress.max_unlocked_level = current_level.0;
                     crate::progress::save_progress(&progress);
                 }
+                info!("Level {} completed (deaths: {})", current_level.0, counter.current_level);
                 if current_level.0 < LEVELS.len() {
                     next_state.set(GameState::LevelTransition);
                 } else {
@@ -271,6 +274,7 @@ fn check_spikes(
                     *velocity = LinearVelocity::ZERO;
                 }
                 counter.current_level += 1;
+                debug!("Death by spikes (level deaths: {})", counter.current_level);
                 return;
             }
         }

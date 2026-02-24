@@ -115,6 +115,7 @@ fn player_death(
             transform.translation = spawn_point.0.extend(0.0);
             *velocity = LinearVelocity::ZERO;
             counter.current_level += 1;
+            debug!("Death by falling (level deaths: {})", counter.current_level);
         }
     }
 }

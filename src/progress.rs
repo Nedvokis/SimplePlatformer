@@ -25,16 +25,34 @@ fn save_path() -> PathBuf {
 
 fn load_progress() -> PlayerProgress {
     let path = save_path();
-    std::fs::read_to_string(&path)
-        .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default()
+    match std::fs::read_to_string(&path) {
+        Ok(s) => match serde_json::from_str(&s) {
+            Ok(p) => {
+                info!("Progress loaded from {:?}", path);
+                p
+            }
+            Err(e) => {
+                error!("Failed to parse progress: {}", e);
+                PlayerProgress::default()
+            }
+        },
+        Err(_) => {
+            info!("No save file found, starting fresh");
+            PlayerProgress::default()
+        }
+    }
 }
 
 pub fn save_progress(progress: &PlayerProgress) {
     let path = save_path();
-    if let Ok(json) = serde_json::to_string_pretty(progress) {
-        std::fs::write(path, json).ok();
+    match serde_json::to_string_pretty(progress) {
+        Ok(json) => {
+            if let Err(e) = std::fs::write(&path, json) {
+                error!("Failed to save progress: {}", e);
+            } else {
+                info!("Progress saved (max_level: {})", progress.max_unlocked_level);
+            }
+        }
+        Err(e) => error!("Failed to serialize progress: {}", e),
     }
 }
-
